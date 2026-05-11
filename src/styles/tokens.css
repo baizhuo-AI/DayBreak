@@ -1,0 +1,137 @@
+/**
+ * Daybreak design tokens
+ * 暗色优先(html.dark),亮色作为可选
+ *
+ * 颜色全部用 "R G B" 三元组形式,以便 Tailwind 用 `rgb(var(--xxx) / <alpha-value>)`
+ * 支持透明度(`bg-zinc-900/50` 这种 class 才能工作)
+ */
+
+:root {
+  color-scheme: light;
+
+  /* zinc 灰阶 */
+  --zinc-50: 250 250 250;
+  --zinc-100: 244 244 245;
+  --zinc-200: 228 228 231;
+  --zinc-300: 212 212 216;
+  --zinc-400: 161 161 170;
+  --zinc-500: 113 113 122;
+  --zinc-600: 82 82 91;
+  --zinc-700: 63 63 70;
+  --zinc-800: 39 39 42;
+  --zinc-900: 24 24 27;
+  --zinc-950: 9 9 11;
+
+  /* indigo 主强调 */
+  --indigo-50: 238 242 255;
+  --indigo-100: 224 231 255;
+  --indigo-300: 165 180 252;
+  --indigo-400: 129 140 248;
+  --indigo-500: 99 102 241;
+  --indigo-600: 79 70 229;
+  --indigo-700: 67 56 202;
+
+  /* emerald 正向 */
+  --emerald-50: 236 253 245;
+  --emerald-100: 209 250 229;
+  --emerald-200: 167 243 208;
+  --emerald-400: 52 211 153;
+  --emerald-500: 16 185 129;
+  --emerald-600: 5 150 105;
+  --emerald-700: 4 120 87;
+  --emerald-900: 6 78 59;
+  --emerald-950: 2 44 34;
+
+  /* amber 警示 */
+  --amber-50: 255 251 235;
+  --amber-100: 254 243 199;
+  --amber-200: 253 230 138;
+  --amber-300: 252 211 77;
+  --amber-400: 251 191 36;
+  --amber-500: 245 158 11;
+  --amber-700: 180 83 9;
+  --amber-800: 146 64 14;
+  --amber-900: 120 53 15;
+  --amber-950: 69 26 3;
+
+  /* red 危险 */
+  --red-50: 254 242 242;
+  --red-400: 248 113 113;
+  --red-500: 239 68 68;
+  --red-600: 220 38 38;
+  --red-950: 69 10 10;
+
+  /* light 主题语义色(默认指向调色盘) */
+  --bg: var(--zinc-50);
+  --bg-elevated: 255 255 255;
+  --bg-muted: var(--zinc-100);
+  --border: var(--zinc-200);
+  --border-strong: var(--zinc-300);
+  --text: var(--zinc-900);
+  --text-muted: var(--zinc-500);
+  --text-faint: var(--zinc-400);
+  --accent: var(--indigo-500);
+  --success: var(--emerald-500);
+  --warning: var(--amber-500);
+  --danger: var(--red-500);
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Microsoft YaHei", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", Menlo, Consolas, monospace;
+
+  /* 字号 */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-full: 9999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.12);
+
+  /* 动效 */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 280ms;
+  --motion-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: var(--zinc-950);
+  --bg-elevated: var(--zinc-900);
+  --bg-muted: var(--zinc-900);
+  --border: var(--zinc-800);
+  --border-strong: var(--zinc-700);
+  --text: var(--zinc-50);
+  --text-muted: var(--zinc-400);
+  --text-faint: var(--zinc-500);
+  --accent: var(--indigo-400);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 1ms;
+    --motion-base: 1ms;
+    --motion-slow: 1ms;
+  }
+}

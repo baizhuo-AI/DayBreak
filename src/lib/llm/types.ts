@@ -1,0 +1,81 @@
+/**
+ * LLM Provider 抽象
+ *
+ * 设计原则:不被任何一家 LLM 厂商锁死。
+ * 所有 provider(DeepSeek / Anthropic / OpenAI ...)实现同一接口,Settings 里可切。
+ *
+ * 高层 API(parseTask / generateBriefing)在 index.ts 里调底层 chat,
+ * UI 不直接接触 provider。
+ */
+
+export interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface ChatOptions {
+  /** 0-2,越高越发散,默认 0.3(解析任务要稳) */
+  temperature?: number;
+  /** 限制输出长度 */
+  maxTokens?: number;
+  /** "json":强制 JSON 输出(deepseek/openai 都支持);"text":自由文本 */
+  responseFormat?: "json" | "text";
+  /** 覆盖默认 model(比如 chat 强制走 deepseek-reasoner) */
+  model?: string;
+}
+
+export interface LLMUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export interface ChatResult {
+  content: string;
+  /** 推理模型的思考过程(deepseek-reasoner / o1 系列才有) */
+  reasoning?: string;
+  usage?: LLMUsage;
+  /** 实际使用的 model(用于 usage 记录) */
+  model?: string;
+}
+
+export interface StreamHandlers {
+  /** 最终回答的 token */
+  onToken: (token: string) => void;
+  /** 思考过程的 token(推理模型才会触发) */
+  onReasoningToken?: (token: string) => void;
+  onDone?: (result: ChatResult) => void;
+  onError?: (err: Error) => void;
+  signal?: AbortSignal;
+}
+
+export interface LLMProvider {
+  /** Provider 标识(用于日志、Settings 显示) */
+  readonly name: string;
+  /** 当前 model(用于 usage 记录) */
+  readonly model: string;
+  /** 一次性返回完整响应(适合解析、JSON 任务) */
+  chat(messages: ChatMessage[], opts?: ChatOptions): Promise<ChatResult>;
+  /** 流式响应(适合 Chat 对话);返回最终完整内容 */
+  chatStream(
+    messages: ChatMessage[],
+    opts: ChatOptions,
+    handlers: StreamHandlers
+  ): Promise<ChatResult>;
+}
+
+/* ---------- 高层 API 的输出类型 ---------- */
+
+import type { Priority } from "../store";
+
+export interface ParseTaskResult {
+  title: string;
+  reason?: string;
+  deadline?: string;
+  priority: Priority;
+  tags: string[];
+  estTime?: string;
+  scheduledTime?: string;
+  /** LLM 是否成功解析(失败时 fallback 用原文做 title) */
+  parsed: boolean;
+}

@@ -1,0 +1,19 @@
+[package]
+name = "daybreak"
+version = "0.1.0"
+description = "Daybreak — AI-powered personal daily briefing and planner"
+authors = ["apple"]
+edition = "2021"
+
+[lib]
+name = "daybreak_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+# 防双开:第二次启动时把焦点切回已有窗口,避免两个进程同时写 SQLite 触发 BUSY
+tauri-plugin-single-instance = { version = "2", features = [] }

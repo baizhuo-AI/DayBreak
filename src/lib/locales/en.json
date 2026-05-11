@@ -1,0 +1,250 @@
+{
+  "app": {
+    "name": "Daybreak"
+  },
+  "nav": {
+    "briefing": "Briefing",
+    "todos": "Todos",
+    "calendar": "Calendar",
+    "reflect": "Reflect",
+    "chat": "Chat",
+    "telos": "Telos",
+    "settings": "Settings",
+    "openFloating": "Open floating panel"
+  },
+  "floating": {
+    "title": "Daybreak · Today",
+    "placeholder": "Jot something (Enter)",
+    "empty": "No tasks today. Jot something above to start.",
+    "progress": "{{done}}/{{total}} done",
+    "added": "Added",
+    "addedNoParse": "Added (AI didn't parse, used original)",
+    "addFailed": "Add failed, see console"
+  },
+  "topbar": {
+    "placeholder": "Tell Daybreak what you need to do…",
+    "parsing": "AI parsing…",
+    "field": {
+      "deadline": "Deadline",
+      "estTime": "Est. time",
+      "tags": "Tags"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "stub": "High"
+  },
+  "briefing": {
+    "greeting": "Good morning. Today is {{date}}.",
+    "subtitle": "Daybreak has prepared today's optimal plan.",
+    "freeTime": {
+      "label": "Available focus time today: {{hours}}",
+      "note": "Booked {{conflicts}}",
+      "empty": "Nothing booked today — the workday is wide open"
+    },
+    "empty": "No tasks today. ⌘K to AI-parse, or N to add manually.",
+    "todayPlan": "Today's plan",
+    "procrastinated": "Procrastinated",
+    "procrastinatedFor": "Delayed {{days}} days",
+    "pushBack": "Suggested push back",
+    "completed": "Completed ({{count}})",
+    "clearCompleted": "Clear all",
+    "actions": {
+      "doNow": "Do it now",
+      "delayToNextWeek": "Delay to next week",
+      "delete": "Delete",
+      "startToday": "Got it, start today",
+      "regenerate": "Regenerate today's plan"
+    }
+  },
+  "todos": {
+    "title": "Tasks",
+    "search": "Search title / reason / tags…",
+    "filter": {
+      "all": "All"
+    },
+    "sort": {
+      "createdAt": "Created",
+      "deadline": "Deadline",
+      "priority": "Priority",
+      "title": "Title"
+    },
+    "addTask": "New",
+    "addTaskHint": "New task (N)",
+    "viewList": "List",
+    "viewKanban": "Kanban",
+    "columns": {
+      "title": "Title",
+      "deadline": "Deadline",
+      "tags": "Tags",
+      "estTime": "Est."
+    },
+    "noDeadline": "None",
+    "empty": "No tasks. ⌘K to AI-parse, or N to add manually.",
+    "doneSection": "Done ({{count}})",
+    "clearDone": "Clear"
+  },
+  "newTask": {
+    "title": "New task",
+    "subtitle": "Manual entry, no AI. For AI parsing use the top bar (⌘K).",
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. File April travel reimbursement",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "Why now, what you'll get from doing it. Shown in Briefing.",
+      "deadline": "Deadline",
+      "deadlinePlaceholder": "today 18:00 / by Friday / 2026-05-15",
+      "priority": "Priority",
+      "tags": "Tags",
+      "tagsPlaceholder": "Press Enter to add, max 3",
+      "estTime": "Est. time",
+      "estTimePlaceholder": "15m / 1h / 1.5h",
+      "scheduledTime": "Scheduled slot",
+      "scheduledTimePlaceholder": "09:30-11:00"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "none": "None"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "errors": {
+      "titleRequired": "Title is required"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "comingSoon": "Calendar view coming soon.",
+    "view": {
+      "month": "Month",
+      "week": "Week"
+    },
+    "today": "Today",
+    "aiPlanToday": "AI plan today",
+    "aiPlanning": "AI thinking…",
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "noScheduled": "Unscheduled",
+    "unscheduledHeader": "Unscheduled ({{count}})",
+    "unscheduledHint": "Drag onto the grid to schedule",
+    "monthEmpty": "No scheduled tasks this month"
+  },
+  "reflect": {
+    "title": "Reflect",
+    "comingSoon": "Reflection space coming soon.",
+    "subtitle": "Look back at today/this week and let AI distill a reflection",
+    "period": {
+      "day": "Today",
+      "week": "This week"
+    },
+    "generate": "Generate reflection",
+    "generating": "AI thinking…",
+    "current": "{{date}} reflection",
+    "empty": "No reflection for this period yet. Tap \"Generate reflection\" to let AI help.",
+    "history": "Past reflections",
+    "stats": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "procrastinated": "Procrastinated"
+    }
+  },
+  "chat": {
+    "title": "Chat",
+    "placeholder": "Ask Daybreak anything about your day… (⌘+Enter to send)",
+    "comingSoon": "Chat coming soon.",
+    "newConv": "New chat",
+    "noConvs": "No chats yet. Click above to start one.",
+    "send": "Send",
+    "stop": "Stop",
+    "sendHint": "⌘+Enter to send · Today's todos and Telos are auto-attached as context",
+    "emptyTitle": "Talk to Daybreak about today",
+    "emptyBody": "Today's todos, Telos goals and the current time are auto-attached. Ask things like \"can I push these two meetings to tomorrow\" or \"which should I tackle first\".",
+    "deleteConv": "Delete conversation",
+    "reasoning": "Reasoning",
+    "reasoningStreaming": "Thinking…"
+  },
+  "telos": {
+    "title": "Telos · Long-term goals",
+    "subtitle": "Tell Daybreak your direction. It'll factor these in when planning your day and briefing.",
+    "comingSoon": "Telos coming soon.",
+    "period": {
+      "year": "Yearly",
+      "quarter": "Quarterly",
+      "month": "Monthly"
+    },
+    "empty": "No goals yet. Tap \"Add\" to start.",
+    "addGoal": "Add",
+    "create": "Create",
+    "delete": "Delete",
+    "new": {
+      "year": "New yearly goal",
+      "quarter": "New quarterly goal",
+      "month": "New monthly goal"
+    },
+    "fields": {
+      "title": "Goal",
+      "titlePlaceholder": "e.g. Ship Daybreak desktop 1.0 by Q3",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "Why this matters, definition of done…",
+      "targetDate": "Target date (optional)",
+      "targetDatePlaceholder": "2026-06-30"
+    },
+    "errors": {
+      "titleRequired": "Goal title is required"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": {
+      "title": "Appearance",
+      "lang": "Language",
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System"
+    },
+    "llm": {
+      "title": "AI provider",
+      "description": "Pick an LLM provider and paste your API key. Keys are stored locally in localStorage and never uploaded.",
+      "provider": "Provider",
+      "providerMock": "Mock (no AI)",
+      "apiKey": "API Key",
+      "model": "Model"
+    },
+    "usage": {
+      "title": "Usage",
+      "description": "Cumulative tokens across all LLM calls. Estimated cost uses DeepSeek-chat public pricing (input ¥0.001/1K, output ¥0.002/1K) — actual billing may differ.",
+      "calls": "Calls",
+      "promptTokens": "Input tokens",
+      "completionTokens": "Output tokens",
+      "estCost": "Est. cost"
+    },
+    "data": {
+      "title": "Data",
+      "description": "The local SQLite database lives in macOS Application Support; nothing is uploaded.",
+      "export": "Export JSON",
+      "exportDone": "Exported {{filename}} ({{kb}} KB)",
+      "import": "Import JSON",
+      "importDone": "Imported {{todos}} todos and {{goals}} goals (skipped {{skipped}} duplicates)",
+      "clearTodos": "Delete all todos",
+      "clearTodosConfirm": "Delete all todos from SQLite? This is irreversible. Export JSON first as a backup.",
+      "clearTodosDone": "Deleted {{count}} todos",
+      "resetSettings": "Reset settings",
+      "resetSettingsConfirm": "Reset language, theme and API keys to defaults?",
+      "resetDone": "Settings reset"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "comingSoon": "Coming soon",
+    "completed": "Today {{done}}/{{total}}",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "deleteConfirm": "Delete \"{{title}}\"? This cannot be undone.",
+    "clearConfirm": "Clear all {{count}} completed tasks? This cannot be undone."
+  }
+}

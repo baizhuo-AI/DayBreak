@@ -1,0 +1,250 @@
+{
+  "app": {
+    "name": "Daybreak"
+  },
+  "nav": {
+    "briefing": "早安",
+    "todos": "待办",
+    "calendar": "日历",
+    "reflect": "反思",
+    "chat": "AI 对话",
+    "telos": "Telos",
+    "settings": "设置",
+    "openFloating": "打开浮窗"
+  },
+  "floating": {
+    "title": "Daybreak · 今日",
+    "placeholder": "记一笔(回车提交)",
+    "empty": "今天没有待办,试试在上面记一笔",
+    "progress": "完成 {{done}}/{{total}}",
+    "added": "已添加",
+    "addedNoParse": "已添加(AI 未生效,用了原文)",
+    "addFailed": "添加失败,详情见 console"
+  },
+  "topbar": {
+    "placeholder": "告诉 Daybreak 你要做什么…比如:明天下午给客户 A 过方案",
+    "parsing": "AI 实时解析中…",
+    "field": {
+      "deadline": "截止",
+      "estTime": "预估耗时",
+      "tags": "标签"
+    },
+    "actions": {
+      "cancel": "取消",
+      "confirm": "确认建项"
+    },
+    "stub": "高优"
+  },
+  "briefing": {
+    "greeting": "早安。今天 {{date}}。",
+    "subtitle": "Daybreak 已为你生成了今日最优解。",
+    "freeTime": {
+      "label": "今日可用空档:{{hours}}",
+      "note": "已预定 {{conflicts}}",
+      "empty": "今天没有已排时段,整个工作时段都空着"
+    },
+    "empty": "今天还没有待办,⌘K 让 AI 帮你解析,或按 N 手动新建",
+    "todayPlan": "今日方案",
+    "procrastinated": "拖延提醒",
+    "procrastinatedFor": "拖了 {{days}} 天",
+    "pushBack": "建议 push back",
+    "completed": "已完成 {{count}} 条",
+    "clearCompleted": "清空全部",
+    "actions": {
+      "doNow": "现在做",
+      "delayToNextWeek": "顺延到下周",
+      "delete": "删除",
+      "startToday": "收到,开始今天的工作",
+      "regenerate": "重新生成今日方案"
+    }
+  },
+  "todos": {
+    "title": "待办管理",
+    "search": "搜索标题、理由、标签…",
+    "filter": {
+      "all": "全部"
+    },
+    "sort": {
+      "createdAt": "创建时间",
+      "deadline": "截止时间",
+      "priority": "优先级",
+      "title": "标题"
+    },
+    "addTask": "新建",
+    "addTaskHint": "新建待办 (N)",
+    "viewList": "列表",
+    "viewKanban": "看板",
+    "columns": {
+      "title": "标题",
+      "deadline": "截止时间",
+      "tags": "标签",
+      "estTime": "耗时"
+    },
+    "noDeadline": "未设置",
+    "empty": "暂无待办,⌘K 让 AI 帮你解析,或按 N 手动新建",
+    "doneSection": "已完成 {{count}}",
+    "clearDone": "清空"
+  },
+  "newTask": {
+    "title": "新建待办",
+    "subtitle": "纯手填,不调 AI;想用 AI 解析请走顶栏 ⌘K",
+    "fields": {
+      "title": "标题",
+      "titlePlaceholder": "比如:报销 4 月差旅费",
+      "reason": "为什么(可选)",
+      "reasonPlaceholder": "为什么现在做、做完获得什么。Briefing 早安页会显示。",
+      "deadline": "截止",
+      "deadlinePlaceholder": "今天 18:00 / 周五前 / 2026-05-15",
+      "priority": "优先级",
+      "tags": "标签",
+      "tagsPlaceholder": "回车添加,最多 3 个",
+      "estTime": "预估耗时",
+      "estTimePlaceholder": "15m / 1h / 1.5h",
+      "scheduledTime": "排期(时段)",
+      "scheduledTimePlaceholder": "09:30-11:00"
+    },
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低",
+      "none": "无"
+    },
+    "actions": {
+      "cancel": "取消",
+      "create": "创建"
+    },
+    "errors": {
+      "titleRequired": "标题不能为空"
+    }
+  },
+  "calendar": {
+    "title": "日历",
+    "comingSoon": "日历视图开发中。",
+    "view": {
+      "month": "月",
+      "week": "周"
+    },
+    "today": "今天",
+    "aiPlanToday": "AI 排今日",
+    "aiPlanning": "AI 思考中…",
+    "weekdays": ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+    "noScheduled": "未排期",
+    "unscheduledHeader": "未排期({{count}})",
+    "unscheduledHint": "拖到左侧时间格安排时段",
+    "monthEmpty": "本月暂无排期任务"
+  },
+  "reflect": {
+    "title": "反思",
+    "comingSoon": "反思页开发中。",
+    "subtitle": "回看今天/本周的完成情况,让 AI 帮你提炼一段反思",
+    "period": {
+      "day": "今日",
+      "week": "本周"
+    },
+    "generate": "生成反思",
+    "generating": "AI 思考中…",
+    "current": "{{date}} 反思",
+    "empty": "还没有这个周期的反思。点击「生成反思」让 AI 帮你梳理。",
+    "history": "历史反思",
+    "stats": {
+      "completed": "已完成",
+      "pending": "未完成",
+      "procrastinated": "拖延"
+    }
+  },
+  "chat": {
+    "title": "AI 对话",
+    "placeholder": "问 Daybreak 任何关于你今天的安排…(⌘+Enter 发送)",
+    "comingSoon": "对话功能开发中。",
+    "newConv": "新对话",
+    "noConvs": "还没有对话。点上面开始第一段。",
+    "send": "发送",
+    "stop": "停止",
+    "sendHint": "⌘+Enter 发送 / 你的今日 todos 和 Telos 会自动作为上下文",
+    "emptyTitle": "和 Daybreak 聊聊今天",
+    "emptyBody": "今日待办、Telos 目标和当前时间都会自动作为上下文。问「我下午这两个会能挪到明天吗」「今天应该先做哪个」都行。",
+    "deleteConv": "删除对话",
+    "reasoning": "思考过程",
+    "reasoningStreaming": "思考中…"
+  },
+  "telos": {
+    "title": "Telos · 长期目标",
+    "subtitle": "把方向告诉 Daybreak,它会在排今日和早安时把这些目标考虑进去",
+    "comingSoon": "Telos 页面开发中。",
+    "period": {
+      "year": "年度目标",
+      "quarter": "本季目标",
+      "month": "本月目标"
+    },
+    "empty": "暂无目标,点右上「添加」开始",
+    "addGoal": "添加",
+    "create": "创建",
+    "delete": "删除",
+    "new": {
+      "year": "新建年度目标",
+      "quarter": "新建本季目标",
+      "month": "新建本月目标"
+    },
+    "fields": {
+      "title": "目标",
+      "titlePlaceholder": "比如:Q3 完成 Daybreak 桌面版 1.0",
+      "description": "描述(可选)",
+      "descriptionPlaceholder": "更详细的目标内容、为什么、达成标准…",
+      "targetDate": "截止时间(可选)",
+      "targetDatePlaceholder": "2026-06-30"
+    },
+    "errors": {
+      "titleRequired": "目标标题不能为空"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "appearance": {
+      "title": "外观",
+      "lang": "语言",
+      "theme": "主题",
+      "themeLight": "亮色",
+      "themeDark": "暗色",
+      "themeSystem": "跟随系统"
+    },
+    "llm": {
+      "title": "AI 提供商",
+      "description": "选一个 LLM 提供商,填入你的 API key。key 只保存在本地 localStorage,不会上传。",
+      "provider": "提供商",
+      "providerMock": "Mock(无 AI)",
+      "apiKey": "API Key",
+      "model": "模型"
+    },
+    "usage": {
+      "title": "用量",
+      "description": "累计所有 LLM 调用的 token 数。估算成本按 deepseek-chat 公开价(输入 ¥0.001/1K、输出 ¥0.002/1K)粗算,实际以厂商账单为准。",
+      "calls": "调用次数",
+      "promptTokens": "输入 tokens",
+      "completionTokens": "输出 tokens",
+      "estCost": "估算成本"
+    },
+    "data": {
+      "title": "数据",
+      "description": "数据库放在本地 macOS Application Support 目录,不会上云。",
+      "export": "导出 JSON",
+      "exportDone": "已导出 {{filename}}({{kb}} KB)",
+      "import": "导入 JSON",
+      "importDone": "已导入 {{todos}} 条待办、{{goals}} 个目标(跳过 {{skipped}} 条重复)",
+      "clearTodos": "清空所有待办",
+      "clearTodosConfirm": "确认清空全部待办?这会从 SQLite 里删除,不可恢复。建议先「导出 JSON」备份。",
+      "clearTodosDone": "已删除 {{count}} 条",
+      "resetSettings": "重置设置",
+      "resetSettingsConfirm": "重置后语言、主题、API key 都会清掉,确认?",
+      "resetDone": "设置已重置"
+    }
+  },
+  "common": {
+    "loading": "加载中…",
+    "comingSoon": "建设中",
+    "completed": "今日完成 {{done}}/{{total}}",
+    "cancel": "取消",
+    "confirm": "确认",
+    "deleteConfirm": "确认删除「{{title}}」?删除后不可恢复。",
+    "clearConfirm": "确认清空全部 {{count}} 条已完成任务?不可恢复。"
+  }
+}

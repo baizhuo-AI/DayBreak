@@ -1,0 +1,91 @@
+{
+  "about": {
+    "homepage": "https://www.ladle.dev",
+    "github": "https://github.com/tajo/ladle",
+    "version": 1
+  },
+  "stories": {
+    "components--p0-core--badges-and-buttons": {
+      "name": "Badges and buttons",
+      "levels": [
+        "Components",
+        "P0 core"
+      ],
+      "locStart": 20,
+      "locEnd": 39,
+      "filePath": "src/design-system/components/CoreComponents.stories.tsx",
+      "namedExport": "BadgesAndButtons",
+      "meta": {}
+    },
+    "components--p0-core--check-in-preview": {
+      "name": "Check in preview",
+      "levels": [
+        "Components",
+        "P0 core"
+      ],
+      "locStart": 61,
+      "locEnd": 73,
+      "filePath": "src/design-system/components/CoreComponents.stories.tsx",
+      "namedExport": "CheckInPreview",
+      "meta": {}
+    },
+    "components--p0-core--inputs-and-switcher": {
+      "name": "Inputs and switcher",
+      "levels": [
+        "Components",
+        "P0 core"
+      ],
+      "locStart": 41,
+      "locEnd": 59,
+      "filePath": "src/design-system/components/CoreComponents.stories.tsx",
+      "namedExport": "InputsAndSwitcher",
+      "meta": {}
+    },
+    "components--taskitem--dark-mode": {
+      "name": "Dark mode",
+      "levels": [
+        "Components",
+        "Taskitem"
+      ],
+      "locStart": 50,
+      "locEnd": 61,
+      "filePath": "src/design-system/components/TaskItem.stories.tsx",
+      "namedExport": "DarkMode",
+      "meta": {}
+    },
+    "components--taskitem--states": {
+      "name": "States",
+      "levels": [
+        "Components",
+        "Taskitem"
+      ],
+      "locStart": 8,
+      "locEnd": 48,
+      "filePath": "src/design-system/components/TaskItem.stories.tsx",
+      "namedExport": "States",
+      "meta": {}
+    },
+    "patterns--floating-panel-pattern": {
+      "name": "Floating panel pattern",
+      "levels": [
+        "Patterns"
+      ],
+      "locStart": 10,
+      "locEnd": 49,
+      "filePath": "src/design-system/patterns/Patterns.stories.tsx",
+      "namedExport": "FloatingPanelPattern",
+      "meta": {}
+    },
+    "patterns--report-and-capsule": {
+      "name": "Report and capsule",
+      "levels": [
+        "Patterns"
+      ],
+      "locStart": 51,
+      "locEnd": 76,
+      "filePath": "src/design-system/patterns/Patterns.stories.tsx",
+      "namedExport": "ReportAndCapsule",
+      "meta": {}
+    }
+  }
+}
