@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
-    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/api": "^2.11.0",
     "@tauri-apps/plugin-sql": "^2.4.0",
     "clsx": "^2.1.1",
     "i18next": "^26.0.10",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@ladle/react": "^5.1.1",
-    "@tauri-apps/cli": "^2.10.1",
+    "@tauri-apps/cli": "^2.11.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
