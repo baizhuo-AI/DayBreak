@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { X, Plus } from "lucide-react";
-import { useTodoStore, newTodoId, type Priority } from "../lib/store";
+import { useTodoStore, newTodoId, type Priority, type Todo } from "../lib/store";
 import { cn } from "../lib/utils";
 import { DatePicker } from "./DatePicker";
 import {
@@ -30,6 +30,8 @@ import {
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 传入则进入"编辑"模式：表单预填，提交走 updateTodo（全字段覆盖） */
+  initial?: Todo | null;
 }
 
 const PRIORITIES: Priority[] = ["high", "medium", "low", "none"];
@@ -40,9 +42,11 @@ const QUICK_DEADLINES: QuickDeadlineKind[] = [
   "nextMon"
 ];
 
-export function NewTaskModal({ open, onClose }: Props) {
+export function NewTaskModal({ open, onClose, initial }: Props) {
   const { t } = useTranslation();
   const addTodo = useTodoStore((s) => s.addTodo);
+  const updateTodo = useTodoStore((s) => s.updateTodo);
+  const isEditing = !!initial;
 
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
@@ -58,24 +62,34 @@ export function NewTaskModal({ open, onClose }: Props) {
 
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // 打开时:清空旧值 + 聚焦标题
+  // 打开时:从 initial 预填(编辑模式)或清空(新建模式),聚焦标题
   useEffect(() => {
     if (open) {
-      setTitle("");
-      setReason("");
-      setDeadline("");
-      setPriority("none");
-      setTags([]);
+      // scheduledTime "HH:MM-HH:MM" 拆回两个 time input 预填
+      let sStart = "";
+      let sEnd = "";
+      if (initial?.scheduledTime) {
+        const m = initial.scheduledTime.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+        if (m) {
+          sStart = m[1];
+          sEnd = m[2];
+        }
+      }
+      setTitle(initial?.title ?? "");
+      setReason(initial?.reason ?? "");
+      setDeadline(initial?.deadline ?? "");
+      setPriority(initial?.priority ?? "none");
+      setTags(initial?.tags ?? []);
       setTagInput("");
-      setEstTime("");
-      setSchedStart("");
-      setSchedEnd("");
+      setEstTime(initial?.estTime ?? "");
+      setSchedStart(sStart);
+      setSchedEnd(sEnd);
       setError(null);
       setSubmitting(false);
       const id = setTimeout(() => titleRef.current?.focus(), 100);
       return () => clearTimeout(id);
     }
-  }, [open]);
+  }, [open, initial]);
 
   // Esc 关闭(在 modal 打开时挂)
   useEffect(() => {
@@ -133,19 +147,33 @@ export function NewTaskModal({ open, onClose }: Props) {
     try {
       const now = new Date();
       const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      await addTodo({
-        id: newTodoId(),
-        title: trimmedTitle,
-        reason: reason.trim() || undefined,
-        deadline: deadline || undefined,
-        priority,
-        tags,
-        estTime: estTime.trim() || undefined,
-        scheduledTime,
-        scheduledDate: todayKey,
-        status: "todo",
-        createdAt: now.toISOString()
-      });
+      if (isEditing && initial) {
+        // 编辑模式：保留 id / createdAt / status / 标记位，覆盖其它可编辑字段
+        await updateTodo({
+          ...initial,
+          title: trimmedTitle,
+          reason: reason.trim() || undefined,
+          deadline: deadline || undefined,
+          priority,
+          tags,
+          estTime: estTime.trim() || undefined,
+          scheduledTime
+        });
+      } else {
+        await addTodo({
+          id: newTodoId(),
+          title: trimmedTitle,
+          reason: reason.trim() || undefined,
+          deadline: deadline || undefined,
+          priority,
+          tags,
+          estTime: estTime.trim() || undefined,
+          scheduledTime,
+          scheduledDate: todayKey,
+          status: "todo",
+          createdAt: now.toISOString()
+        });
+      }
       onClose();
     } catch (err) {
       console.error("[NewTaskModal] create failed:", err);
@@ -184,10 +212,10 @@ export function NewTaskModal({ open, onClose }: Props) {
             <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  {t("newTask.title")}
+                  {isEditing ? "编辑待办" : t("newTask.title")}
                 </h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {t("newTask.subtitle")}
+                  {isEditing ? "修改后回车保存（⌘+Enter）" : t("newTask.subtitle")}
                 </p>
               </div>
               <button
@@ -377,7 +405,7 @@ export function NewTaskModal({ open, onClose }: Props) {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Plus className="w-3.5 h-3.5" />
-                {t("newTask.actions.create")}
+                {isEditing ? "保存" : t("newTask.actions.create")}
               </button>
             </div>
           </motion.div>

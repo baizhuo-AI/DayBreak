@@ -158,6 +158,47 @@ export const CHAT_TOOLS: ChatTool[] = [
     },
   },
   {
+    name: "update_todo",
+    description: "编辑已有任务的字段（标题/原因/优先级/deadline/标签/预估时间）。只填想改的字段；状态/排期请用 set_todo_status / schedule_todo",
+    parameters: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "目标任务的 id" },
+        title: { type: "string" },
+        reason: { type: "string" },
+        deadline: { type: "string", description: "YYYY-MM-DD；空字符串则清除" },
+        priority: { type: "string", description: "high / medium / low / none" },
+        tags: { type: "array", items: { type: "string" } },
+        est_time: { type: "string", description: "如 1.5h / 30m" },
+      },
+      required: ["id"],
+    },
+    execute: async (a) => {
+      const id = str(a.id);
+      if (!id) return JSON.stringify({ error: "id 必填" });
+      const all = await dbListTodos();
+      const cur = all.find((t) => t.id === id);
+      if (!cur) return JSON.stringify({ error: "没找到该 id" });
+      const merged: Todo = {
+        ...cur,
+        title: typeof a.title === "string" && a.title.trim() ? a.title.trim() : cur.title,
+        reason: typeof a.reason === "string" ? (a.reason || undefined) : cur.reason,
+        deadline: typeof a.deadline === "string" ? (a.deadline || undefined) : cur.deadline,
+        priority: (str(a.priority) as Priority) ?? cur.priority,
+        tags: Array.isArray(a.tags)
+          ? (a.tags as unknown[]).filter((x): x is string => typeof x === "string")
+          : cur.tags,
+        estTime: typeof a.est_time === "string" ? (a.est_time || undefined) : cur.estTime,
+      };
+      await useTodoStore.getState().updateTodo(merged);
+      return JSON.stringify({
+        updated: true,
+        id,
+        fieldsChanged: Object.keys(a).filter((k) => k !== "id"),
+      });
+    },
+  },
+  {
     name: "today_overview",
     description: "查看某一天的任务概览（默认今天）",
     parameters: {

@@ -13,7 +13,7 @@ import { FloatingApp } from "./pages/FloatingApp";
 import { useTodoStore } from "./lib/store";
 import { useGoalsStore } from "./lib/goalsStore";
 import { useActivityStore } from "./lib/activityStore";
-import { emitSync, type SyncTopic } from "./lib/syncBus";
+import { emitSync, onSync, type SyncTopic } from "./lib/syncBus";
 import { startReminderScheduler } from "./lib/reminder";
 import { ConfirmDialogProvider } from "./components/ConfirmDialog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -77,6 +77,19 @@ function MainApp() {
       });
     })();
     return () => unlisten?.();
+  }, []);
+
+  // 监听其它窗口（浮窗等）发来的前端同步广播：收到就重新 hydrate 对应 store。
+  // 之前缺这一段，导致浮窗加任务后主窗待办页不刷新（同步是单向的）。
+  useEffect(() => {
+    const offTodos = onSync("todos", () => void useTodoStore.getState().hydrate());
+    const offGoals = onSync("goals", () => void useGoalsStore.getState().hydrate());
+    const offActs = onSync("activities", () => void useActivityStore.getState().hydrate());
+    return () => {
+      offTodos();
+      offGoals();
+      offActs();
+    };
   }, []);
 
   // 间歇式时间日志:提醒调度只在主窗口起一份(浮窗走 FloatingApp 分支,不会到这里),避免重复提醒

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { newTodoId, useTodoStore, type Todo } from "../lib/store";
 import { useActivityStore } from "../lib/activityStore";
+import { NewTaskModal } from "../components/NewTaskModal";
 import { parseTask } from "../lib/llm";
 import { onSync } from "../lib/syncBus";
 import { dateKey, parseScheduledTime } from "../lib/calendar";
@@ -65,6 +66,7 @@ export function FloatingApp() {
   const [activityValue, setActivityValue] = useState("");
   const [activitySubmitting, setActivitySubmitting] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const activityInputRef = useRef<HTMLInputElement>(null);
 
@@ -286,6 +288,7 @@ export function FloatingApp() {
                 key={todo.id}
                 todo={todo}
                 onToggle={() => void toggleComplete(todo.id)}
+                onEdit={() => setEditingTodo(todo)}
               />
             ))
           )}
@@ -325,6 +328,13 @@ export function FloatingApp() {
         <span>{t("floating.progress", { done, total })}</span>
         {done > 0 && <CheckCircle2 className="h-3.5 w-3.5 text-success" />}
       </footer>
+
+      {/* 编辑 modal（双击任务行触发；空间小但 modal 自带滚动） */}
+      <NewTaskModal
+        open={!!editingTodo}
+        initial={editingTodo}
+        onClose={() => setEditingTodo(null)}
+      />
     </div>
   );
 }
@@ -355,16 +365,19 @@ async function hideSelf(): Promise<void> {
 
 function TodoLine({
   todo,
-  onToggle
+  onToggle,
+  onEdit
 }: {
   todo: Todo;
   onToggle: () => void;
+  onEdit: () => void;
 }) {
   return (
     <motion.div
       layout
+      onDoubleClick={onEdit}
       className={cn(
-        "group flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors",
+        "group flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors cursor-default",
         "hover:bg-bg-muted"
       )}
     >

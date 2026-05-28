@@ -4,6 +4,7 @@ import {
   dbInsertTodo,
   dbListTodos,
   dbSeedIfEmpty,
+  dbUpdateTodo,
   dbUpdateTodoStatus,
   dbUpdateTodoSchedule
 } from "./db";
@@ -144,6 +145,8 @@ interface TodoStore {
   toggleComplete: (id: string) => Promise<void>;
   /** 删 */
   removeTodo: (id: string) => Promise<void>;
+  /** 编辑（全字段覆盖；id / createdAt 保持不变） */
+  updateTodo: (todo: Todo) => Promise<void>;
   /** 批量更新 schedule(AI 排今日、拖拽改时段) */
   applySchedules: (updates: ScheduleUpdate[]) => Promise<void>;
 }
@@ -184,6 +187,14 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
   removeTodo: async (id) => {
     await dbDeleteTodo(id);
     set((state) => ({ todos: state.todos.filter((t) => t.id !== id) }));
+    emitSync("todos");
+  },
+
+  updateTodo: async (todo) => {
+    await dbUpdateTodo(todo);
+    set((state) => ({
+      todos: state.todos.map((t) => (t.id === todo.id ? todo : t))
+    }));
     emitSync("todos");
   },
 

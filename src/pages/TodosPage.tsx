@@ -11,7 +11,8 @@ import {
   List,
   ChevronRight,
   X,
-  ArrowDownAZ
+  ArrowDownAZ,
+  Pencil
 } from "lucide-react";
 import { useTodoStore, type Todo, type Priority } from "../lib/store";
 import { cn } from "../lib/utils";
@@ -39,6 +40,7 @@ export function TodosPage() {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [doneExpanded, setDoneExpanded] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [query, setQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState<FilterPriority>("all");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
@@ -227,6 +229,7 @@ export function TodosPage() {
                 todo={todo}
                 onToggle={() => void toggleComplete(todo.id)}
                 onRemove={() => void removeTodo(todo.id)}
+                onEdit={() => setEditingTodo(todo)}
                 noDeadlineLabel={t("todos.noDeadline")}
               />
             ))}
@@ -278,6 +281,7 @@ export function TodosPage() {
                           todo={todo}
                           onToggle={() => void toggleComplete(todo.id)}
                           onRemove={() => void removeTodo(todo.id)}
+                          onEdit={() => setEditingTodo(todo)}
                           noDeadlineLabel={t("todos.noDeadline")}
                         />
                       ))}
@@ -291,8 +295,12 @@ export function TodosPage() {
       </div>
 
       <NewTaskModal
-        open={newTaskOpen}
-        onClose={() => setNewTaskOpen(false)}
+        open={newTaskOpen || !!editingTodo}
+        initial={editingTodo}
+        onClose={() => {
+          setNewTaskOpen(false);
+          setEditingTodo(null);
+        }}
       />
     </div>
   );
@@ -333,18 +341,21 @@ function TodoRow({
   todo,
   onToggle,
   onRemove,
+  onEdit,
   noDeadlineLabel
 }: {
   todo: Todo;
   onToggle: () => void;
   onRemove: () => void;
+  onEdit: () => void;
   noDeadlineLabel: string;
 }) {
   const isDone = todo.status === "done";
   return (
     <div
+      onDoubleClick={onEdit}
       className={cn(
-        "group relative grid grid-cols-[1fr_120px_140px_80px] gap-4 items-center px-4 py-3 transition-all rounded-xl",
+        "group relative grid grid-cols-[1fr_120px_140px_80px] gap-4 items-center px-4 py-3 transition-all rounded-xl cursor-default",
         "bg-white dark:bg-zinc-900",
         "border border-zinc-200 dark:border-zinc-800",
         "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
@@ -391,7 +402,16 @@ function TodoRow({
         {todo.estTime ?? "-"}
       </div>
 
-      {/* hover 右侧浮出删除按钮(absolute 不挤 grid) */}
+      {/* hover 右侧浮出 编辑 + 删除 两个按钮（absolute 不挤 grid） */}
+      <button
+        type="button"
+        onClick={onEdit}
+        className="absolute right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all"
+        aria-label="edit"
+        title="编辑"
+      >
+        <Pencil className="w-3.5 h-3.5" />
+      </button>
       <button
         type="button"
         onClick={onRemove}

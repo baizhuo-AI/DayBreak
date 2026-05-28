@@ -250,6 +250,33 @@ export async function dbUpdateTodoSchedule(
   );
 }
 
+/** 编辑：全字段覆盖（除 id / created_at）。updated_at 自动设为现在。 */
+export async function dbUpdateTodo(todo: Todo): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE todos SET
+      title = $1, reason = $2, deadline = $3, priority = $4, tags = $5,
+      est_time = $6, status = $7, scheduled_time = $8, scheduled_date = $9,
+      is_pushback = $10, is_procrastinated = $11, updated_at = $12
+     WHERE id = $13`,
+    [
+      todo.title,
+      todo.reason ?? null,
+      todo.deadline ?? null,
+      todo.priority,
+      JSON.stringify(todo.tags ?? []),
+      todo.estTime ?? null,
+      todo.status,
+      todo.scheduledTime ?? null,
+      todo.scheduledDate ?? null,
+      todo.isPushBackSuggestion ? 1 : 0,
+      todo.isProcrastinated ? 1 : 0,
+      new Date().toISOString(),
+      todo.id
+    ]
+  );
+}
+
 export async function dbDeleteTodo(id: string): Promise<void> {
   const db = await getDb();
   await db.execute("DELETE FROM todos WHERE id = $1", [id]);
