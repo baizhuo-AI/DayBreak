@@ -4,7 +4,7 @@ import type {
   ChatResult,
   LLMProvider,
   StreamHandlers,
-  LLMUsage
+  LLMUsage,
 } from "./types";
 
 /**
@@ -16,8 +16,11 @@ import type {
  *
  * 文档:https://api-docs.deepseek.com/
  *
- * - chat:非流式,适合 parseTask / generateTodayPlan / 生成 Briefing 这种结构化任务
+ * - chat:非流式,适合 parseTask / generateTodayPlan / 生成 Briefing,以及 function calling 的 agent loop
  * - chatStream:SSE 流式,适合 Chat 对话(打字机效果)
+ *
+ * function calling:仅在 chat（非流式）支持 tools 参数 + 解析 tool_calls；
+ * deepseek-chat 支持，deepseek-reasoner 不支持（带 tools 会报错）。
  */
 
 interface DeepSeekConfig {
@@ -26,8 +29,18 @@ interface DeepSeekConfig {
   model: string;
 }
 
+interface DeepSeekToolCall {
+  id: string;
+  type: string;
+  function: { name: string; arguments: string };
+}
+
 interface DeepSeekChoice {
-  message?: { content?: string; reasoning_content?: string };
+  message?: {
+    content?: string;
+    reasoning_content?: string;
+    tool_calls?: DeepSeekToolCall[];
+  };
   delta?: { content?: string; reasoning_content?: string };
   finish_reason?: string | null;
 }
@@ -39,6 +52,25 @@ interface DeepSeekResponse {
     completion_tokens?: number;
     total_tokens?: number;
   };
+}
+
+/** 把内部 ChatMessage 转成 DeepSeek/OpenAI 的消息格式（处理 tool_calls / tool 结果消息） */
+function toApiMessage(m: ChatMessage): Record<string, unknown> {
+  if (m.role === "assistant" && m.toolCalls && m.toolCalls.length > 0) {
+    return {
+      role: "assistant",
+      content: m.content || "",
+      tool_calls: m.toolCalls.map((tc) => ({
+        id: tc.id,
+        type: "function",
+        function: { name: tc.name, arguments: tc.arguments },
+      })),
+    };
+  }
+  if (m.role === "tool") {
+    return { role: "tool", tool_call_id: m.toolCallId, content: m.content };
+  }
+  return { role: m.role, content: m.content };
 }
 
 export class DeepSeekProvider implements LLMProvider {
@@ -57,15 +89,18 @@ export class DeepSeekProvider implements LLMProvider {
     const model = opts.model ?? this.cfg.model;
     const body: Record<string, unknown> = {
       model,
-      messages,
+      messages: messages.map(toApiMessage),
       temperature: opts.temperature ?? 0.3,
-      stream
+      stream,
     };
     if (opts.maxTokens) body.max_tokens = opts.maxTokens;
     // 注意:deepseek-reasoner 不支持 response_format/JSON mode,启用了反而报错。
-    // 只在非推理模型上设 json mode。
     if (opts.responseFormat === "json" && !model.includes("reasoner")) {
       body.response_format = { type: "json_object" };
+    }
+    // function calling:reasoner 不支持 tools，保险起见只在非 reasoner 上带
+    if (opts.tools && opts.tools.length > 0 && !model.includes("reasoner")) {
+      body.tools = opts.tools;
     }
     return body;
   }
@@ -84,9 +119,9 @@ export class DeepSeekProvider implements LLMProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this.cfg.apiKey}`
+        Authorization: `Bearer ${this.cfg.apiKey}`,
       },
-      body: JSON.stringify(this.buildBody(messages, opts, false))
+      body: JSON.stringify(this.buildBody(messages, opts, false)),
     });
 
     if (!res.ok) {
@@ -98,14 +133,24 @@ export class DeepSeekProvider implements LLMProvider {
 
     const data = (await res.json()) as DeepSeekResponse;
     const msg = data.choices?.[0]?.message;
-    const content = msg?.content;
-    if (!content) throw new Error("[DeepSeek] empty response");
+    const content = msg?.content ?? "";
+    const toolCalls = msg?.tool_calls?.map((tc) => ({
+      id: tc.id,
+      name: tc.function.name,
+      arguments: tc.function.arguments,
+    }));
+
+    // 有 tool_calls 时 content 可以为空（模型只想调工具），不算错误
+    if (!content && (!toolCalls || toolCalls.length === 0)) {
+      throw new Error("[DeepSeek] empty response");
+    }
 
     return {
       content,
       reasoning: msg?.reasoning_content,
+      toolCalls,
       usage: toUsage(data.usage),
-      model: this.resolveModel(opts)
+      model: this.resolveModel(opts),
     };
   }
 
@@ -118,10 +163,10 @@ export class DeepSeekProvider implements LLMProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this.cfg.apiKey}`
+        Authorization: `Bearer ${this.cfg.apiKey}`,
       },
       body: JSON.stringify(this.buildBody(messages, opts, true)),
-      signal: handlers.signal
+      signal: handlers.signal,
     });
 
     if (!res.ok || !res.body) {
@@ -146,7 +191,6 @@ export class DeepSeekProvider implements LLMProvider {
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        // SSE: 按 \n 切行,每行 "data: <json>" 或 "data: [DONE]"
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
 
@@ -159,7 +203,6 @@ export class DeepSeekProvider implements LLMProvider {
             const chunk = JSON.parse(payload) as DeepSeekResponse;
             const delta = chunk.choices?.[0]?.delta;
 
-            // 推理模型先发 reasoning_content,后发 content;两者分流到对应 handler
             const reasonTok = delta?.reasoning_content;
             if (reasonTok) {
               accReasoning += reasonTok;
@@ -189,7 +232,7 @@ export class DeepSeekProvider implements LLMProvider {
       content: accContent,
       reasoning: accReasoning || undefined,
       usage,
-      model: this.resolveModel(opts)
+      model: this.resolveModel(opts),
     };
     handlers.onDone?.(result);
     return result;
@@ -204,6 +247,6 @@ function toUsage(
     promptTokens: raw.prompt_tokens ?? 0,
     completionTokens: raw.completion_tokens ?? 0,
     totalTokens:
-      raw.total_tokens ?? (raw.prompt_tokens ?? 0) + (raw.completion_tokens ?? 0)
+      raw.total_tokens ?? (raw.prompt_tokens ?? 0) + (raw.completion_tokens ?? 0),
   };
 }

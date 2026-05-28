@@ -19,7 +19,15 @@
     "progress": "完成 {{done}}/{{total}}",
     "added": "已添加",
     "addedNoParse": "已添加(AI 未生效,用了原文)",
-    "addFailed": "添加失败,详情见 console"
+    "addFailed": "添加失败,详情见 console",
+    "close": "隐藏浮窗",
+    "activityPrompt": "刚才在做什么?",
+    "activityPlaceholder": "记一句刚才做的事",
+    "activityLog": "记录",
+    "activitySkip": "跳过",
+    "activityLogged": "已记录",
+    "activityFailed": "记录失败,详情见 console",
+    "todayLog": "今日记录 {{count}}"
   },
   "topbar": {
     "placeholder": "告诉 Daybreak 你要做什么…比如:明天下午给客户 A 过方案",
@@ -114,7 +122,15 @@
       "create": "创建"
     },
     "errors": {
-      "titleRequired": "标题不能为空"
+      "titleRequired": "标题不能为空",
+      "invalidTimeRange": "结束时间要晚于开始时间"
+    },
+    "deadlineQuick": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "thisFri": "本周五",
+      "nextMon": "下周一",
+      "clear": "清除"
     }
   },
   "calendar": {
@@ -199,6 +215,24 @@
   },
   "settings": {
     "title": "设置",
+    "reminder": {
+      "title": "定时提醒",
+      "description": "每隔一段时间提醒你记一句「刚才在做什么」,积累真实的时间去向。",
+      "enabled": "开启提醒",
+      "on": "开",
+      "off": "关",
+      "interval": "提醒间隔",
+      "minutes": "分钟",
+      "channel": "提醒方式",
+      "channelFloating": "浮窗",
+      "channelNotification": "系统通知",
+      "channelBoth": "两者",
+      "workHours": "工作时段(小时)",
+      "pause": "暂停",
+      "pause1h": "暂停 1 小时",
+      "pauseToday": "今天不再提醒",
+      "resume": "恢复提醒"
+    },
     "appearance": {
       "title": "外观",
       "lang": "语言",
@@ -240,6 +274,7 @@
   },
   "common": {
     "loading": "加载中…",
+    "pickDate": "选择日期",
     "comingSoon": "建设中",
     "completed": "今日完成 {{done}}/{{total}}",
     "cancel": "取消",

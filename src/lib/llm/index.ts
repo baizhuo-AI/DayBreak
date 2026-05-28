@@ -9,6 +9,7 @@ import {
   type ProviderName
 } from "../settings";
 import { dbInsertUsage } from "../db";
+import { toolsForLLM, runChatTool } from "../chatTools";
 import { useGoalsStore, type Goal } from "../goalsStore";
 
 export type { LLMProvider, ChatMessage, ChatOptions, ChatResult, StreamHandlers, LLMUsage } from "./types";
@@ -329,7 +330,7 @@ export async function generateReflection(input: ReflectInput): Promise<string> {
 
 /* ---------- Chat 高层 API ---------- */
 
-import type { ChatMessage, StreamHandlers } from "./types";
+import type { ChatMessage, ChatResult, StreamHandlers } from "./types";
 
 /**
  * 构造一段当前上下文 system prompt:今天 todos + 当前时间 + Telos
@@ -398,6 +399,73 @@ export async function chatStreamCall(
   );
   recordUsage(provider, result.usage, "chat", result.model);
   return result;
+}
+
+const TOOL_SYSTEM_HINT = `
+
+你能调用工具来帮用户管理任务、目标、复盘、时间日志（增删改查、排期、标记完成等）。
+- 用户意图涉及这些操作时，直接调用相应工具完成，再用简洁中文说明结果。
+- 查询类需求也走工具拿最新数据，不要凭空编造。
+- 删除任务/目标是可恢复的（标记放弃），放心执行。`;
+
+/**
+ * 带 function calling 的 agent 对话（非流式）。
+ *
+ * 模型可多轮调用工具：调工具 → 前端执行 → 结果回传 → 继续，直到给出最终答复。
+ * 仅在支持工具的模型上真正生效（deepseek-chat）；mock / reasoner 不会调工具，退化为普通问答。
+ * MAX_ROUNDS 防止模型在工具间反复横跳导致死循环。
+ */
+export async function chatAgentCall(
+  history: ChatMessage[],
+  opts?: { onStep?: (info: { type: "tool"; name: string }) => void }
+): Promise<ChatResult> {
+  const provider = getProvider();
+  const isDeepSeek = provider.name === "deepseek";
+  const tools = toolsForLLM();
+  const messages: ChatMessage[] = [
+    { role: "system", content: buildChatSystemPrompt() + TOOL_SYSTEM_HINT },
+    ...history,
+  ];
+  // deepseek-chat 支持工具调用（reasoner 不支持）；其它 provider 用默认 model
+  const model = isDeepSeek ? "deepseek-chat" : undefined;
+  const MAX_ROUNDS = 6;
+  let last: ChatResult = { content: "" };
+
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    const result = await provider.chat(messages, {
+      temperature: 0.5,
+      maxTokens: 2000,
+      tools,
+      model,
+    });
+    recordUsage(provider, result.usage, "chat-agent", result.model);
+    last = result;
+
+    if (!result.toolCalls || result.toolCalls.length === 0) {
+      return result; // 模型给出最终答复，结束
+    }
+
+    // 记录 assistant 的工具调用请求
+    messages.push({
+      role: "assistant",
+      content: result.content,
+      toolCalls: result.toolCalls,
+    });
+    // 逐个执行工具，结果作为 tool 消息回传给模型
+    for (const tc of result.toolCalls) {
+      opts?.onStep?.({ type: "tool", name: tc.name });
+      let args: Record<string, unknown> = {};
+      try {
+        args = tc.arguments ? (JSON.parse(tc.arguments) as Record<string, unknown>) : {};
+      } catch {
+        /* 参数解析失败就传空对象，工具内部会返回字段缺失错误给模型 */
+      }
+      const toolResult = await runChatTool(tc.name, args);
+      messages.push({ role: "tool", content: toolResult, toolCallId: tc.id });
+    }
+  }
+
+  return { content: last.content || "(处理轮数过多，请换种说法重试)", model };
 }
 
 function formatDateKey(d: Date): string {

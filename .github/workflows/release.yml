@@ -1,0 +1,57 @@
+name: Release
+
+# 打 tag（如 v0.2.0）即触发：在 macOS 上构建 universal .dmg 并发布到 GitHub Release。
+# 无签名 / 无公证（面向技术用户分发），用户首次打开需右键→打开绕过 Gatekeeper（见 README）。
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write # 创建 Release、上传产物需要写权限
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust（含 Intel + Apple Silicon 两个 target，产出 universal 包）
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build & release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # universal 包同时兼容 Intel 和 Apple Silicon Mac
+          args: --target universal-apple-darwin
+          tagName: ${{ github.ref_name }}
+          releaseName: "Daybreak ${{ github.ref_name }}"
+          releaseBody: |
+            ## 安装
+            下载下方 `.dmg`，拖入「应用程序」。
+
+            **首次打开**：macOS 会提示"无法验证开发者"（因为未做苹果签名）。
+            右键点 Daybreak → 选「打开」→ 再点「打开」即可。
+            或终端执行：`xattr -d com.apple.quarantine /Applications/Daybreak.app`
+
+            ## 接入 AI 助手
+            打开 Daybreak → 设置 → 「接入 AI 助手」→ 复制命令，粘到 Claude Code 运行。
+          releaseDraft: false
+          prerelease: false

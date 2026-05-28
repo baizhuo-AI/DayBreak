@@ -11,6 +11,10 @@ import { TelosPage } from "./pages/TelosPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { FloatingApp } from "./pages/FloatingApp";
 import { useTodoStore } from "./lib/store";
+import { useGoalsStore } from "./lib/goalsStore";
+import { useActivityStore } from "./lib/activityStore";
+import { emitSync, type SyncTopic } from "./lib/syncBus";
+import { startReminderScheduler } from "./lib/reminder";
 import { ConfirmDialogProvider } from "./components/ConfirmDialog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Toaster } from "./components/Toaster";
@@ -21,7 +25,7 @@ const FLOATING_HASH = "#/__floating__";
  * App 主壳:根据 URL hash 决定渲染主 App 还是浮窗。
  *
  *  - 默认 hash 为空或主路由 → 主 App(Sidebar + TopBar + 6 个 tab)
- *  - hash === FLOATING_HASH → 浮窗(240×420,常驻置顶)
+ *  - hash === FLOATING_HASH → 浮窗(260×420,常驻置顶)
  *
  * 两个 Tauri 窗口共用同一份代码,通过 hash 切换入口。
  * 共享:SQLite db(同文件)+ BroadcastChannel 跨窗口同步。
@@ -58,6 +62,28 @@ function MainApp() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  // 监听 MCP 后端写操作发来的刷新事件：刷新本窗口对应 store，并经 BroadcastChannel 通知浮窗
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    void (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen<string>("daybreak://data-changed", (e) => {
+        const topic = e.payload as SyncTopic;
+        if (topic === "todos") void useTodoStore.getState().hydrate();
+        else if (topic === "goals") void useGoalsStore.getState().hydrate();
+        else if (topic === "activities") void useActivityStore.getState().hydrate();
+        emitSync(topic);
+      });
+    })();
+    return () => unlisten?.();
+  }, []);
+
+  // 间歇式时间日志:提醒调度只在主窗口起一份(浮窗走 FloatingApp 分支,不会到这里),避免重复提醒
+  useEffect(() => {
+    const stop = startReminderScheduler();
+    return stop;
+  }, []);
 
   return (
     <ErrorBoundary>

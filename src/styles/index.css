@@ -49,6 +49,15 @@
   .no-drag {
     -webkit-app-region: no-drag;
   }
+
+  /* 浮窗窗口开了 transparent(tauri.conf 的 floating window):FloatingApp 挂载时给
+     <html> 加 .is-floating,让 html/body/#root 背景透明,圆角卡片外缘才能透出桌面。
+     主窗口是另一个 WebView/document,不受影响。 */
+  html.is-floating,
+  html.is-floating body,
+  html.is-floating #root {
+    background: transparent;
+  }
 }
 
 @layer utilities {

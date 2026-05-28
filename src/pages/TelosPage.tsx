@@ -10,6 +10,7 @@ import {
   type GoalStatus
 } from "../lib/goalsStore";
 import { cn } from "../lib/utils";
+import { DatePicker } from "../components/DatePicker";
 import { useConfirm } from "../components/ConfirmDialog";
 
 /**
@@ -312,11 +313,10 @@ function ComposeModal({
           </FieldLabel>
 
           <FieldLabel label={t("telos.fields.targetDate")}>
-            <input
+            <DatePicker
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
-              placeholder={t("telos.fields.targetDatePlaceholder")}
-              className={inputCls}
+              onChange={setTargetDate}
+              placeholder={t("common.pickDate")}
             />
           </FieldLabel>
         </div>

@@ -11,6 +11,7 @@ import i18n from "./i18n";
  *  - llmProvider:当前激活 LLM
  *  - keys:各家的 API key(脱敏显示)
  *  - baseUrls / models:各家的可选覆盖
+ *  - reminder:间歇式时间日志的定时提醒配置
  *
  * 主题不在这里,在 lib/theme.ts(主题切换有专门的 system 模式 + matchMedia 监听,逻辑分离更清楚)
  */
@@ -18,10 +19,31 @@ import i18n from "./i18n";
 export type Lang = "zh" | "en";
 export type ProviderName = "deepseek" | "anthropic" | "openai" | "mock";
 
+/** 内置对话用哪个后端：DeepSeek API 直连 / 三家本地 CLI 各自走用户订阅或 API key */
+export type ChatBackend = "deepseek-api" | "claude-cli" | "codex-cli" | "kiro-cli";
+
 interface ProviderConfig {
   apiKey?: string;
   baseUrl?: string;
   model?: string;
+}
+
+/** 提醒方式:浮窗 / 系统通知 / 两者都用 */
+export type ReminderChannel = "floating" | "notification" | "both";
+
+export interface ReminderConfig {
+  /** 总开关 */
+  enabled: boolean;
+  /** 提醒间隔(分钟) */
+  intervalMin: number;
+  /** 提醒方式 */
+  channel: ReminderChannel;
+  /** 工作时段起始小时(0-23),只在 [workStart, workEnd) 内提醒 */
+  workStart: number;
+  /** 工作时段结束小时(0-23) */
+  workEnd: number;
+  /** 暂停截止时间戳(ms);Date.now() < pausedUntil 时不提醒 */
+  pausedUntil?: number;
 }
 
 export interface SettingsState {
@@ -32,6 +54,9 @@ export interface SettingsState {
     anthropic: ProviderConfig;
     openai: ProviderConfig;
   };
+  /** 内置对话用哪个后端：默认 DeepSeek API；三家 CLI 走用户本地订阅/API key */
+  chatBackend: ChatBackend;
+  reminder: ReminderConfig;
 }
 
 const STORAGE_KEY = "daybreak.settings";
@@ -59,6 +84,15 @@ function defaults(): SettingsState {
         baseUrl: "https://api.openai.com/v1",
         model: env.VITE_OPENAI_MODEL ?? "gpt-4o"
       }
+    },
+    chatBackend: "deepseek-api",
+    // 提醒默认关闭(用户主动去设置里开,避免一上来就被打扰);开后默认 2h、工作时段 9-22
+    reminder: {
+      enabled: false,
+      intervalMin: 120,
+      channel: "both",
+      workStart: 9,
+      workEnd: 22
     }
   };
 }
@@ -87,7 +121,9 @@ function readStored(): SettingsState {
         deepseek: { ...def.providers.deepseek, ...(parsed.providers?.deepseek ?? {}) },
         anthropic: { ...def.providers.anthropic, ...(parsed.providers?.anthropic ?? {}) },
         openai: { ...def.providers.openai, ...(parsed.providers?.openai ?? {}) }
-      }
+      },
+      chatBackend: validChatBackend(parsed.chatBackend) ? parsed.chatBackend : def.chatBackend,
+      reminder: { ...def.reminder, ...(parsed.reminder ?? {}) }
     };
   } catch (err) {
     console.error("[settings] parse failed, falling back to defaults:", err);
@@ -97,6 +133,10 @@ function readStored(): SettingsState {
 
 function validProvider(v: string): v is ProviderName {
   return ["deepseek", "anthropic", "openai", "mock"].includes(v);
+}
+
+function validChatBackend(v: unknown): v is ChatBackend {
+  return v === "deepseek-api" || v === "claude-cli" || v === "codex-cli" || v === "kiro-cli";
 }
 
 function persist(state: SettingsState) {
@@ -111,6 +151,8 @@ interface SettingsStore extends SettingsState {
   setLang: (lang: Lang) => void;
   setProvider: (p: ProviderName) => void;
   setProviderConfig: (p: Exclude<ProviderName, "mock">, cfg: ProviderConfig) => void;
+  setReminder: (patch: Partial<ReminderConfig>) => void;
+  setChatBackend: (b: ChatBackend) => void;
   reset: () => void;
 }
 
@@ -133,6 +175,15 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     set({ providers });
     persist({ ...get(), providers });
     resetProviderCache();
+  },
+  setReminder: (patch) => {
+    const reminder = { ...get().reminder, ...patch };
+    set({ reminder });
+    persist({ ...get(), reminder });
+  },
+  setChatBackend: (chatBackend) => {
+    set({ chatBackend });
+    persist({ ...get(), chatBackend });
   },
   reset: () => {
     const d = defaults();

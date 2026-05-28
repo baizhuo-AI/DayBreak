@@ -95,6 +95,14 @@ CREATE TABLE IF NOT EXISTS llm_usage (
 );
 
 CREATE INDEX IF NOT EXISTS idx_llm_usage_created_at ON llm_usage(created_at);
+
+CREATE TABLE IF NOT EXISTS activity_log (
+  id TEXT PRIMARY KEY,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_created_at ON activity_log(created_at);
 `;
 
 /**
@@ -609,4 +617,46 @@ export async function dbUsageSummary(): Promise<{
     totalCompletionTokens: r?.ct ?? 0,
     totalTokens: r?.tt ?? 0
   };
+}
+
+/* ---------- Activity Log(间歇式时间日志) ---------- */
+
+export interface ActivityRecord {
+  id: string;
+  content: string;
+  /** ISO 时间戳 */
+  createdAt: string;
+}
+
+interface ActivityRow {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
+export async function dbInsertActivity(rec: ActivityRecord): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "INSERT INTO activity_log (id, content, created_at) VALUES ($1,$2,$3)",
+    [rec.id, rec.content, rec.createdAt]
+  );
+}
+
+/** 最近 N 条活动记录,按时间倒序。当日过滤交给前端(按本地时区 dateKey),避免 UTC 边界问题。 */
+export async function dbListActivities(limit = 100): Promise<ActivityRecord[]> {
+  const db = await getDb();
+  const rows = await db.select<ActivityRow[]>(
+    "SELECT * FROM activity_log ORDER BY created_at DESC LIMIT $1",
+    [limit]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    content: r.content,
+    createdAt: r.created_at
+  }));
+}
+
+export async function dbDeleteActivity(id: string): Promise<void> {
+  const db = await getDb();
+  await db.execute("DELETE FROM activity_log WHERE id = $1", [id]);
 }

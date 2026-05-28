@@ -11,7 +11,10 @@ import {
   type ChatMessageRow,
   type ConversationRow
 } from "./db";
-import { chatStreamCall } from "./llm";
+import { chatAgentCall, buildChatSystemPrompt } from "./llm";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { useSettingsStore } from "./settings";
 import type { ChatMessage } from "./llm/types";
 
 /** id 生成器 */
@@ -41,6 +44,94 @@ interface ChatStore {
   renameConv: (id: string, title: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   stop: () => void;
+}
+
+/** 内置对话用 CLI 后端时，各会话的 CLI session id（in-memory，重启丢失；MVP 简化）*/
+const cliSessionByConv = new Map<string, string>();
+
+interface CliHandlers {
+  onText: (t: string) => void;
+  onThinking: (t: string) => void;
+  onToolCall: (name: string) => void;
+}
+
+type CliKind = "claude" | "codex" | "kiro";
+
+/**
+ * 走本地 CLI（Claude Code / Codex / Kiro）发一轮对话。
+ * spawn 子进程在 Tauri 后端，事件流通过 Tauri event "cli-agent-event" 实时回到前端。
+ * 工具能力靠 CLI 自己连本机 MCP server（端口 42800），复用已有的 16 个工具。
+ */
+async function sendViaCli(
+  kind: CliKind,
+  prompt: string,
+  sessionId: string | undefined,
+  handlers: CliHandlers
+): Promise<{ content: string; sessionId: string | undefined }> {
+  // 拿 MCP 接入信息，让 CLI 启动时连进来管待办（拿不到就退化为纯聊天）
+  type ConnInfo = { url: string; token: string };
+  const conn = await invoke<ConnInfo>("mcp_connection_info").catch(() => null);
+
+  let content = "";
+  let lastSessionId: string | undefined = sessionId;
+  let resolveDone!: () => void;
+  let rejectDone!: (e: Error) => void;
+  const donePromise = new Promise<void>((res, rej) => {
+    resolveDone = res;
+    rejectDone = rej;
+  });
+
+  // 事件载荷类型（与 Rust 端 ChatEvent 对齐：tag=type，snake_case）
+  type Ev =
+    | { type: "thinking"; text: string }
+    | { type: "text"; text: string }
+    | { type: "tool_call_start"; name: string }
+    | { type: "tool_call_end"; name: string; ok: boolean }
+    | { type: "done"; session_id: string | null }
+    | { type: "error"; message: string };
+
+  const unlisten = await listen<Ev>("cli-agent-event", (e) => {
+    const ev = e.payload;
+    switch (ev.type) {
+      case "text":
+        content += ev.text;
+        handlers.onText(ev.text);
+        break;
+      case "thinking":
+        handlers.onThinking(ev.text);
+        break;
+      case "tool_call_start":
+        handlers.onToolCall(ev.name);
+        break;
+      case "tool_call_end":
+        // MVP 暂不单独显示结束（前端 UI 后续可加工具卡片）
+        break;
+      case "done":
+        lastSessionId = ev.session_id ?? lastSessionId;
+        resolveDone();
+        break;
+      case "error":
+        rejectDone(new Error(ev.message));
+        break;
+    }
+  });
+
+  try {
+    await invoke("cli_agent_send", {
+      kind,
+      req: {
+        prompt,
+        sessionId,
+        mcpUrl: conn?.url,
+        mcpToken: conn?.token,
+      },
+    });
+    await donePromise;
+  } finally {
+    unlisten();
+  }
+
+  return { content, sessionId: lastSessionId };
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -171,31 +262,50 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({ abort });
 
     let final = "";
-    let finalReasoning = "";
-    let usageJson: string | undefined;
+    const backend = useSettingsStore.getState().chatBackend;
     try {
-      const result = await chatStreamCall(history, {
-        signal: abort.signal,
-        onToken: (token) => {
-          set((s) => ({ streaming: s.streaming + token }));
-        },
-        onReasoningToken: (token) => {
-          set((s) => ({ streamingReasoning: s.streamingReasoning + token }));
-        }
-      });
-      final = result.content;
-      finalReasoning = result.reasoning ?? "";
-      if (result.usage) usageJson = JSON.stringify(result.usage);
+      if (backend === "deepseek-api") {
+        // 路线 A：DeepSeek API + 内置 agent loop（chatTools.ts 那 16 个工具）
+        const result = await chatAgentCall(history, {
+          onStep: (info) => {
+            set((s) => ({
+              streaming:
+                (s.streaming ? s.streaming + "\n" : "") + `⚙️ 调用工具 ${info.name}…`
+            }));
+          }
+        });
+        final = result.content;
+      } else {
+        // 路线 B：本地 CLI（claude/codex/kiro），走用户订阅；工具能力靠 CLI 连本机 MCP server
+        const kind: CliKind =
+          backend === "claude-cli" ? "claude" : backend === "codex-cli" ? "codex" : "kiro";
+        const sid = cliSessionByConv.get(convId!);
+        // 首次（无 session）把 system prompt 拼到 prompt 前，让 CLI 知道当前 todos / Telos 上下文；
+        // 后续 resume 时 CLI 已持有上下文，只发当前消息
+        const fullPrompt = sid
+          ? trimmed
+          : `${buildChatSystemPrompt()}\n\n---\n\n${trimmed}`;
+        const result = await sendViaCli(kind, fullPrompt, sid, {
+          onText: (t) => set((s) => ({ streaming: s.streaming + t })),
+          onThinking: (t) => set((s) => ({ streamingReasoning: s.streamingReasoning + t })),
+          onToolCall: (name) =>
+            set((s) => ({
+              streaming: (s.streaming ? s.streaming + "\n" : "") + `⚙️ 调用 ${name}…`
+            })),
+        });
+        final = result.content;
+        if (result.sessionId) cliSessionByConv.set(convId!, result.sessionId);
+      }
     } catch (err) {
-      console.error("[chatStore] stream failed:", err);
+      console.error("[chatStore] send failed:", err);
       final = "(请求失败,请稍后重试。错误已记录到 console)";
     } finally {
-      // 写回 assistant 消息完整内容
+      // 写回 assistant 消息完整内容（agent 模式无独立推理链；usage 在 chatAgentCall 内已记）
       await dbUpdateMessageContent(
         assistantId,
         final,
-        finalReasoning || undefined,
-        usageJson
+        undefined,
+        undefined
       ).catch((e) => console.error("[chatStore] update msg failed:", e));
       await dbTouchConversation(convId!).catch(() => undefined);
 
@@ -207,8 +317,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
               ? {
                   ...m,
                   content: final,
-                  reasoningContent: finalReasoning || undefined,
-                  usageJson
+                  reasoningContent: undefined,
+                  usageJson: undefined
                 }
               : m
           )

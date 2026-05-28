@@ -19,7 +19,15 @@
     "progress": "{{done}}/{{total}} done",
     "added": "Added",
     "addedNoParse": "Added (AI didn't parse, used original)",
-    "addFailed": "Add failed, see console"
+    "addFailed": "Add failed, see console",
+    "close": "Hide floating panel",
+    "activityPrompt": "What were you just doing?",
+    "activityPlaceholder": "Jot down what you just did",
+    "activityLog": "Log",
+    "activitySkip": "Skip",
+    "activityLogged": "Logged",
+    "activityFailed": "Log failed, see console",
+    "todayLog": "Today's log {{count}}"
   },
   "topbar": {
     "placeholder": "Tell Daybreak what you need to do…",
@@ -114,7 +122,15 @@
       "create": "Create"
     },
     "errors": {
-      "titleRequired": "Title is required"
+      "titleRequired": "Title is required",
+      "invalidTimeRange": "End time must be after start time"
+    },
+    "deadlineQuick": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "thisFri": "This Fri",
+      "nextMon": "Next Mon",
+      "clear": "Clear"
     }
   },
   "calendar": {
@@ -199,6 +215,24 @@
   },
   "settings": {
     "title": "Settings",
+    "reminder": {
+      "title": "Reminders",
+      "description": "Periodically nudge you to jot down what you just did, building a real log of where your time goes.",
+      "enabled": "Enable",
+      "on": "On",
+      "off": "Off",
+      "interval": "Interval",
+      "minutes": "min",
+      "channel": "Notify via",
+      "channelFloating": "Floating",
+      "channelNotification": "System",
+      "channelBoth": "Both",
+      "workHours": "Active hours",
+      "pause": "Pause",
+      "pause1h": "Pause 1h",
+      "pauseToday": "Mute today",
+      "resume": "Resume"
+    },
     "appearance": {
       "title": "Appearance",
       "lang": "Language",
@@ -240,6 +274,7 @@
   },
   "common": {
     "loading": "Loading…",
+    "pickDate": "Pick a date",
     "comingSoon": "Coming soon",
     "completed": "Today {{done}}/{{total}}",
     "cancel": "Cancel",

@@ -8,9 +8,22 @@
  * UI 不直接接触 provider。
  */
 
+export interface ToolCall {
+  /** 工具调用 id（回传 tool 结果时要带上） */
+  id: string;
+  /** 工具名 */
+  name: string;
+  /** 参数（JSON 字符串） */
+  arguments: string;
+}
+
 export interface ChatMessage {
-  role: "system" | "user" | "assistant";
+  role: "system" | "user" | "assistant" | "tool";
   content: string;
+  /** assistant 发起的工具调用（function calling） */
+  toolCalls?: ToolCall[];
+  /** tool 消息：对应的工具调用 id */
+  toolCallId?: string;
 }
 
 export interface ChatOptions {
@@ -22,6 +35,8 @@ export interface ChatOptions {
   responseFormat?: "json" | "text";
   /** 覆盖默认 model(比如 chat 强制走 deepseek-reasoner) */
   model?: string;
+  /** function calling 工具列表（OpenAI tools 格式）；deepseek-chat 支持，reasoner 不支持 */
+  tools?: unknown[];
 }
 
 export interface LLMUsage {
@@ -37,6 +52,8 @@ export interface ChatResult {
   usage?: LLMUsage;
   /** 实际使用的 model(用于 usage 记录) */
   model?: string;
+  /** 模型发起的工具调用（function calling）；非空时表示要先执行工具再继续 */
+  toolCalls?: ToolCall[];
 }
 
 export interface StreamHandlers {

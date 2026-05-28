@@ -10,7 +10,13 @@
 
 const CHANNEL_NAME = "daybreak-sync";
 
-export type SyncTopic = "todos" | "goals" | "conversations" | "reflections";
+export type SyncTopic =
+  | "todos"
+  | "goals"
+  | "conversations"
+  | "reflections"
+  | "activities"
+  | "reminder";
 
 let _channel: BroadcastChannel | null = null;
 

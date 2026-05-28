@@ -56,6 +56,27 @@ export function startOfWeek(date: Date): Date {
   return addDays(d, -dow);
 }
 
+/* ---------- deadline 快捷词 ---------- */
+
+export type QuickDeadlineKind = "today" | "tomorrow" | "thisFri" | "nextMon";
+
+/**
+ * deadline 快捷词 → "YYYY-MM-DD"。本周五 = 本周一+4,下周一 = 本周一+7。
+ * 传 now 便于单测(默认当前时间)。
+ */
+export function quickDeadline(kind: QuickDeadlineKind, now: Date = new Date()): DateKey {
+  switch (kind) {
+    case "today":
+      return dateKey(now);
+    case "tomorrow":
+      return dateKey(addDays(now, 1));
+    case "thisFri":
+      return dateKey(addDays(startOfWeek(now), 4));
+    case "nextMon":
+      return dateKey(addDays(startOfWeek(now), 7));
+  }
+}
+
 /**
  * 返回月视图的 6x7 矩阵(42 个 Date),包含上月尾和下月头填充
  */

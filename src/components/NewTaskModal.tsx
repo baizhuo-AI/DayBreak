@@ -5,6 +5,12 @@ import { useTranslation } from "react-i18next";
 import { X, Plus } from "lucide-react";
 import { useTodoStore, newTodoId, type Priority } from "../lib/store";
 import { cn } from "../lib/utils";
+import { DatePicker } from "./DatePicker";
+import {
+  parseScheduledTime,
+  quickDeadline,
+  type QuickDeadlineKind
+} from "../lib/calendar";
 
 /**
  * 新建待办 Modal — 纯手填,不调 LLM
@@ -12,8 +18,13 @@ import { cn } from "../lib/utils";
  * 想用 AI 解析请走顶栏 ⌘K(那条路径会调 DeepSeek)
  *
  * 字段:title(必填)/ reason / deadline / priority / tags / estTime / scheduledTime
- * 校验:title 不能空白
+ * 校验:title 不能空白;scheduledTime 结束须晚于开始
  * 快捷:Esc 关闭,⌘+Enter 提交
+ *
+ * 日期/时间均为选择器(2026-05 改):
+ *  - deadline:原生日历(type=date)+ 快捷词(今天/明天/本周五/下周一),存 "YYYY-MM-DD"
+ *  - scheduledTime:开始/结束两个 type=time,提交时拼成 "HH:MM-HH:MM"
+ *    (日历/早安/浮窗都靠 calendar.ts 的 parseScheduledTime 解析这个格式,所以提交前自校验)
  */
 
 interface Props {
@@ -22,6 +33,12 @@ interface Props {
 }
 
 const PRIORITIES: Priority[] = ["high", "medium", "low", "none"];
+const QUICK_DEADLINES: QuickDeadlineKind[] = [
+  "today",
+  "tomorrow",
+  "thisFri",
+  "nextMon"
+];
 
 export function NewTaskModal({ open, onClose }: Props) {
   const { t } = useTranslation();
@@ -34,7 +51,8 @@ export function NewTaskModal({ open, onClose }: Props) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [estTime, setEstTime] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
+  const [schedStart, setSchedStart] = useState("");
+  const [schedEnd, setSchedEnd] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,10 +68,10 @@ export function NewTaskModal({ open, onClose }: Props) {
       setTags([]);
       setTagInput("");
       setEstTime("");
-      setScheduledTime("");
+      setSchedStart("");
+      setSchedEnd("");
       setError(null);
       setSubmitting(false);
-      // 等动画结束再聚焦,否则会被打断
       const id = setTimeout(() => titleRef.current?.focus(), 100);
       return () => clearTimeout(id);
     }
@@ -100,6 +118,16 @@ export function NewTaskModal({ open, onClose }: Props) {
       titleRef.current?.focus();
       return;
     }
+    // 时段:两个 time 选择拼成 "HH:MM-HH:MM",自校验(结束须晚于开始且格式合法)
+    let scheduledTime: string | undefined;
+    if (schedStart && schedEnd) {
+      const candidate = `${schedStart}-${schedEnd}`;
+      if (!parseScheduledTime(candidate)) {
+        setError(t("newTask.errors.invalidTimeRange"));
+        return;
+      }
+      scheduledTime = candidate;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -109,11 +137,11 @@ export function NewTaskModal({ open, onClose }: Props) {
         id: newTodoId(),
         title: trimmedTitle,
         reason: reason.trim() || undefined,
-        deadline: deadline.trim() || undefined,
+        deadline: deadline || undefined,
         priority,
         tags,
         estTime: estTime.trim() || undefined,
-        scheduledTime: scheduledTime.trim() || undefined,
+        scheduledTime,
         scheduledDate: todayKey,
         status: "todo",
         createdAt: now.toISOString()
@@ -202,34 +230,70 @@ export function NewTaskModal({ open, onClose }: Props) {
                 />
               </Field>
 
-              {/* deadline + estTime */}
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t("newTask.fields.deadline")}>
-                  <input
+              {/* deadline:日历选择 + 快捷词 */}
+              <Field label={t("newTask.fields.deadline")}>
+                <div className="space-y-2">
+                  <DatePicker
                     value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    placeholder={t("newTask.fields.deadlinePlaceholder")}
-                    className={inputCls}
+                    onChange={setDeadline}
+                    placeholder={t("common.pickDate")}
                   />
-                </Field>
-                <Field label={t("newTask.fields.estTime")}>
-                  <input
-                    value={estTime}
-                    onChange={(e) => setEstTime(e.target.value)}
-                    placeholder={t("newTask.fields.estTimePlaceholder")}
-                    className={inputCls}
-                  />
-                </Field>
-              </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_DEADLINES.map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setDeadline(quickDeadline(k))}
+                        className={cn(
+                          "px-2 py-1 rounded-md text-xs font-medium transition-colors",
+                          deadline === quickDeadline(k)
+                            ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                            : "text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        )}
+                      >
+                        {t(`newTask.deadlineQuick.${k}`)}
+                      </button>
+                    ))}
+                    {deadline && (
+                      <button
+                        type="button"
+                        onClick={() => setDeadline("")}
+                        className="px-2 py-1 rounded-md text-xs font-medium text-zinc-400 hover:text-red-500 transition-colors"
+                      >
+                        {t("newTask.deadlineQuick.clear")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Field>
 
-              {/* scheduledTime */}
-              <Field label={t("newTask.fields.scheduledTime")}>
+              {/* estTime */}
+              <Field label={t("newTask.fields.estTime")}>
                 <input
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  placeholder={t("newTask.fields.scheduledTimePlaceholder")}
+                  value={estTime}
+                  onChange={(e) => setEstTime(e.target.value)}
+                  placeholder={t("newTask.fields.estTimePlaceholder")}
                   className={inputCls}
                 />
+              </Field>
+
+              {/* scheduledTime:开始 - 结束两个时间选择器,提交时拼成 "HH:MM-HH:MM" */}
+              <Field label={t("newTask.fields.scheduledTime")}>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    value={schedStart}
+                    onChange={(e) => setSchedStart(e.target.value)}
+                    className={inputCls}
+                  />
+                  <span className="flex-shrink-0 text-sm text-zinc-400">–</span>
+                  <input
+                    type="time"
+                    value={schedEnd}
+                    onChange={(e) => setSchedEnd(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
               </Field>
 
               {/* priority */}

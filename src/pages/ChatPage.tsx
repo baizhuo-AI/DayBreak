@@ -11,6 +11,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useChatStore } from "../lib/chatStore";
+import { useSettingsStore } from "../lib/settings";
 import { cn } from "../lib/utils";
 import { useConfirm } from "../components/ConfirmDialog";
 
@@ -38,6 +39,27 @@ export function ChatPage() {
   const deleteConv = useChatStore((s) => s.deleteConv);
   const sendMessage = useChatStore((s) => s.sendMessage);
   const stop = useChatStore((s) => s.stop);
+
+  // 当前对话用哪个后端 + 模型，输入框下方显示给用户看（设置里可切）
+  const chatBackend = useSettingsStore((s) => s.chatBackend);
+  const llmProvider = useSettingsStore((s) => s.llmProvider);
+  const providers = useSettingsStore((s) => s.providers);
+  const providerModel =
+    llmProvider === "mock" ? undefined : providers[llmProvider]?.model;
+  const backendLabel = (() => {
+    switch (chatBackend) {
+      case "deepseek-api":
+        return llmProvider === "mock"
+          ? "Mock（未配 LLM key）"
+          : `${llmProvider} · ${providerModel ?? "默认 model"}`;
+      case "claude-cli":
+        return "Claude Code CLI · 订阅";
+      case "codex-cli":
+        return "Codex CLI";
+      case "kiro-cli":
+        return "Kiro CLI";
+    }
+  })();
 
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -208,7 +230,14 @@ export function ChatPage() {
                 )}
               </div>
               <p className="max-w-3xl mx-auto mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-                {t("chat.sendHint")}
+                <span>
+                  当前后端：
+                  <strong className="text-zinc-600 dark:text-zinc-300 font-medium">
+                    {backendLabel}
+                  </strong>
+                </span>
+                <span className="mx-2">·</span>
+                <span>{t("chat.sendHint")}</span>
               </p>
             </div>
           </>

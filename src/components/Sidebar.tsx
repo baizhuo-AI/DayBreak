@@ -140,7 +140,9 @@ async function openFloating(): Promise<void> {
       await win.setFocus();
       return;
     }
-    // 兜底:如果预声明窗口没找到(罕见),动态新建
+    // 兜底:如果预声明窗口没找到(罕见,通常意味着浮窗被 close 而非 hide,
+    // label 已释放)。参数对齐 tauri.conf.json 里 floating 窗口的声明,
+    // 避免出现一个跟预声明状态不一致(尺寸/置顶/阴影/任务栏行为)的"第二种浮窗"。
     new mod.WebviewWindow("floating", {
       url: "/index.html#/__floating__",
       width: 260,
@@ -150,6 +152,9 @@ async function openFloating(): Promise<void> {
       resizable: true,
       decorations: false,
       alwaysOnTop: true,
+      skipTaskbar: false,
+      transparent: false,
+      shadow: true,
       title: "Daybreak"
     });
   } catch (err) {
